@@ -14,7 +14,6 @@ export const createAPIKeyController = async (req, res) => {
 		}
 
 		const newAPIKey = await ApiKeyModel.createApiKey({ user_id: userData.id });
-		console.log("newAPIKey", newAPIKey);
 		
 		res.status(201).json({
 			success: true,
