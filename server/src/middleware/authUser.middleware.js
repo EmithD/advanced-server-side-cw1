@@ -1,6 +1,11 @@
-import getTokenFromHeader from '../utils/jwtUtils.js';
 
-export const authenticateUser = (req, res, next) => {
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const authenticateUser = (req, res, next) => {
     const token = getTokenFromHeader(req);
     
     if (!token) {
@@ -12,9 +17,20 @@ export const authenticateUser = (req, res, next) => {
     if (!decoded) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
-  
+    
     req.user = decoded;
+    
     next();
+};
+
+const getTokenFromHeader = (req) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  return authHeader.split(' ')[1];
 };
 
 const verifyToken = (token) => {
@@ -24,3 +40,5 @@ const verifyToken = (token) => {
     return null;
   }
 };
+
+export default authenticateUser;

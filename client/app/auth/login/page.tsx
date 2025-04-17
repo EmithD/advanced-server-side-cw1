@@ -33,13 +33,37 @@ const LoginPage = () => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem('authToken');
-  //   if (token) {
-  //     // Optional: Validate token on the server
-  //     router.push('/admin');
-  //   }
-  // }, [router]);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('authToken') || '';
+
+        if (!token) {
+          return;
+        }
+        const response = await fetch('http://localhost:8080/api/auth/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          localStorage.removeItem('authToken');
+          return; 
+        }
+        const data = await response.json();
+        if (data.success) {
+          router.push('/admin');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+
+    checkAuth();
+    
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -137,15 +161,6 @@ const LoginPage = () => {
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link 
-                  href="/auth/forgot-password" 
-                  className="text-xs text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -179,9 +194,9 @@ const LoginPage = () => {
         </CardContent>
         
         <CardFooter className="flex flex-wrap items-center justify-center gap-1">
-          <div className="text-sm text-muted-foreground">
-            Don't have an account?
-          </div>
+        <div className="text-sm text-muted-foreground">
+          Don&apos;t have an account?
+        </div>
           <Link
             href="/auth/register"
             className="text-sm text-primary hover:underline"

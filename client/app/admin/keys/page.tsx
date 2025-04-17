@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { PlusCircle, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PlusCircle, Copy, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,54 +21,187 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import ApiKeyTable from '@/components/ApiKeyTable';
+import { IsAuth } from '@/app/auth/IsAuth';
 
 interface ApiKey {
   id: string;
-  key: string;
-  created: string;
-  requests: number;
+  api_key: string;
+  user_id: string;
+  created_at: string;
 }
 
 const ApiKeysPage = () => {
 
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    { id: '1', key: 'sk_live_abcdefghijklmnopqrstuvwxyz123456', created: '2025-04-01T10:30:00Z', requests: 1245 },
-    { id: '2', key: 'sk_live_zyxwvutsrqponmlkjihgfedcba654321', created: '2025-03-15T14:22:10Z', requests: 532 },
-    { id: '3', key: 'sk_live_9876543210abcdefghijklmnopqrstuv', created: '2025-02-28T09:15:45Z', requests: 3087 },
-  ]);
-
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreateKey = () => {
-    // In a real app, you would call your API to create a new key
-    const generatedKey = `sk_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    
-    const newKeyObj: ApiKey = {
-      id: `${apiKeys.length + 1}`,
-      key: generatedKey,
-      created: new Date().toISOString(),
-      requests: 0
-    };
-    
-    setApiKeys([...apiKeys, newKeyObj]);
-    setNewKey(generatedKey);
-    setIsCreateDialogOpen(true);
+  useEffect(() => {
+    IsAuth(localStorage.getItem('authToken') || '')
+    fetchApiKeys();
+  }, []);
+
+  const fetchApiKeys = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        window.location.href = '/auth/login';
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch('http://localhost:8080/api/api-keys', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch API keys');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        setApiKeys(data.data);
+        setError(null); // Clear any previous errors
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Error fetching API keys:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load API keys');
+      
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const confirmDeleteKey = () => {
-    setApiKeys(apiKeys.filter(key => key.id !== keyToDelete));
-    setIsDeleteDialogOpen(false);
+  const handleCreateKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        window.location.href = '/api/login';
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch('http://localhost:8080/api/api-keys/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create API key');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success || !data.data) {
+        throw new Error('Failed to create API key');
+      }
+
+      const generatedKey = data.data.api_key;
+      const newKeyObj: ApiKey = {
+        id: data.data.id,
+        api_key: generatedKey,
+        user_id: data.data.user_id,
+        created_at: data.data.created_at,
+      };
+
+      setApiKeys([...apiKeys, newKeyObj]);
+      setNewKey(generatedKey);
+      setIsCreateDialogOpen(true);
+      setError(null); // Clear any previous errors on success
+
+    } catch (err) {
+      console.error('Error creating API key:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create API key');
+      
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteKey = (keyId: string) => {
+    setKeyToDelete(keyId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteKey = async () => {
+    if (!keyToDelete) return;
+    
+    setIsLoading(true);
+    setError(null); // Clear any previous errors
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        localStorage.removeItem('authToken');
+        window.location.href = '/api/login';
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`http://localhost:8080/api/api-keys/${keyToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete API key');
+      }
+
+      setApiKeys(apiKeys.filter(key => key.id !== keyToDelete));
+      setError(null); // Clear any previous errors on success
+      
+
+    } catch (err) {
+      console.error('Error deleting API key:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete API key');
+      
+
+    } finally {
+      setIsLoading(false);
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    // You could also add a temporary success message here if you want
   };
 
+  // Function to dismiss error alerts
+  const dismissError = () => {
+    setError(null);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -80,20 +213,52 @@ const ApiKeysPage = () => {
         <Button 
           onClick={handleCreateKey} 
           className="bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={isLoading}
         >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Key
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New Key
+            </>
+          )}
         </Button>
       </div>
 
-      <ApiKeyTable />
+      {/* Display error if present */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-auto" 
+            onClick={dismissError}
+          >
+            Dismiss
+          </Button>
+        </Alert>
+      )}
+
+      <ApiKeyTable 
+        apiKeys={apiKeys} 
+        onDelete={handleDeleteKey} 
+        onCopy={copyToClipboard}
+        isLoading={isLoading}
+      />
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>New API Key Created</DialogTitle>
             <DialogDescription>
-              Make sure to copy your API key now. You won't be able to see it again!
+              Make sure to copy your API key now. You would not be able to see it again!
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 py-4">
@@ -121,7 +286,6 @@ const ApiKeysPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -135,8 +299,9 @@ const ApiKeysPage = () => {
             <AlertDialogAction 
               onClick={confirmDeleteKey}
               className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isLoading}
             >
-              Delete
+              {isLoading ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -30,10 +30,38 @@ export const createUser = (userData) => {
 };
 
 export const findUserByEmail = (email) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     db.get(
       'SELECT id, display_name, email, password, created_at FROM users WHERE email = ?',
       [email],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        if (!row) {
+          resolve(null);
+          return;
+        }
+
+        resolve({
+          id: row.id,
+          display_name: row.display_name,
+          email: row.email,
+          password: row.password,
+          created_at: row.created_at
+        });
+      }
+    );
+  });
+};
+
+export const findUserById = (id) => {
+  return new Promise(async (resolve, reject) => {
+    db.get(
+      'SELECT id, display_name, email, password, created_at FROM users WHERE id = ?',
+      [id],
       (err, row) => {
         if (err) {
           reject(err);

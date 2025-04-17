@@ -30,7 +30,8 @@ const initDb = async () => {
         )`,
         
         `CREATE TABLE IF NOT EXISTS api_keys (
-          api_key TEXT PRIMARY KEY,
+          id TEXT PRIMARY KEY,
+          api_key TEXT NOT NULL UNIQUE,
           user_id TEXT NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)

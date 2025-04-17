@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,18 +13,31 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { IsAuth } from '@/app/auth/IsAuth';
+
+interface User {
+  id: string;
+  display_name: string;
+  email: string;
+}
 
 
 const AdminSideBar = ({ children }: { 
   children: ReactNode;
 }) => {
-  
-//   const { user } = useUser();
-//   const { logout } = useLogout();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const [userProfile, setUserProfile] = useState<User | null >(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const userProfile = IsAuth(localStorage.getItem('authToken') || '');
+      setUserProfile((await userProfile).userProfile);
+    };
+    fetchUserProfile();
+  }, []);
   
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -34,9 +47,10 @@ const AdminSideBar = ({ children }: {
     setMobileOpen(!mobileOpen);
   };
 
-//   const handleLogout = () => {
-//     logout();
-//   };
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    window.location.href = '/auth/login';
+  };
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/admin' },
@@ -57,8 +71,8 @@ const AdminSideBar = ({ children }: {
 
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700">
           <div className="flex items-center">
-            <div className="h-9 w-9 rounded-full text-white backdrop-blur-sm">
-              {/* <LogoSVG /> */}
+            <div className="h-=10 w-9 rounded-full text-white backdrop-blur-sm">
+              <Earth />
             </div>
           </div>
           <button 
@@ -111,7 +125,7 @@ const AdminSideBar = ({ children }: {
               </Avatar>
               <div className="ml-3">
                 <div className="font-medium text-white">
-                  {/* {user?.name} */}
+                  {userProfile?.display_name}
                 </div>
               </div>
             </div>
@@ -119,7 +133,7 @@ const AdminSideBar = ({ children }: {
           <Button 
             variant="ghost" 
             className={`w-full justify-${collapsed ? 'center' : 'start'} text-slate-300 hover:text-white hover:bg-slate-700`}
-            // onClick={handleLogout}
+            onClick={handleLogout}
           >
             <LogOut size={20} />
             {!collapsed && <span className="ml-2">Logout</span>}
@@ -151,7 +165,6 @@ const AdminSideBar = ({ children }: {
           <div className="flex items-center space-x-3">
 
             <Avatar className="h-8 w-8 border border-slate-200">
-              {/* <AvatarImage src={user?.avatar} alt="User" /> */}
               <AvatarFallback className="bg-blue-600">
                 {'U'}
               </AvatarFallback>
