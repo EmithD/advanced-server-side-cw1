@@ -117,12 +117,6 @@ const AdminSideBar = ({ children }: {
         <div className="mt-auto border-t border-slate-700 p-4">
           {!collapsed && (
             <div className="flex items-center mb-4">
-              <Avatar className="h-10 w-10 border border-slate-600">
-                {/* <AvatarImage src={user?.avatar} alt="User" /> */}
-                <AvatarFallback className="bg-blue-600">
-                  {'U'}
-                </AvatarFallback>
-              </Avatar>
               <div className="ml-3">
                 <div className="font-medium text-white">
                   {userProfile?.display_name}
@@ -158,18 +152,6 @@ const AdminSideBar = ({ children }: {
             <Menu size={24} />
           </button>
           
-          <div className="flex-1 max-w-md ml-4 lg:ml-0">
-
-          </div>
-          
-          <div className="flex items-center space-x-3">
-
-            <Avatar className="h-8 w-8 border border-slate-200">
-              <AvatarFallback className="bg-blue-600">
-                {'U'}
-              </AvatarFallback>
-            </Avatar>
-          </div>
         </header>
 
         {children}

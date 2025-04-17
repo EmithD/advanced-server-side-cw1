@@ -16,4 +16,4 @@ services:
       - PORT=8080
       - VERSION=v1
       - JWT_SECRET=thisisthesecretcrabbypattyrecipe
-      - JWT_EXPIRY=5m
+      - JWT_EXPIRY=1h
