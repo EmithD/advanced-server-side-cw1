@@ -33,7 +33,7 @@ Advanced Server Side coursework requirement for IIT w/ University of Westminster
     <li>Visit <a href='http://localhost:3000/auth/register'>localhost:3000/auth/register</a> to create your account</li>
     <li>Create your first API key from the <a href='http://localhost:3000/admin/keys'>API key info page</a></li>
     <li>Paste your API key on the <a href='http://localhost:3000/admin/api'>Countries API Explorer</a> and query various information about countries</li>
-    <li>Visualize API key usage on the <a href='http://localhost:3000/admin/api'>Dashboard</a></li>
+    <li>Visualize API key usage on the <a href='http://localhost:3000/admin'>Dashboard</a></li>
 </ul>
 
 <hr />
