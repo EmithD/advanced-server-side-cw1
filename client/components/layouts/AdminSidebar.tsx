@@ -12,7 +12,6 @@ import {
   KeySquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { IsAuth } from '@/app/auth/IsAuth';
 
 interface User {
