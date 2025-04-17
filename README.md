@@ -5,13 +5,9 @@ Advanced Server Side coursework requirement for IIT w/ University of Westminster
 <table>
   <tr>
     <th>Student Name</th>
-    <th>UoW ID</th>
-    <th>IIT ID</th>
   </tr>
   <tr>
     <td>H.D.E Dinsara</td>
-    <td>w1898909</td>
-    <td>20211226</td>
   </tr>
 </table>
 
